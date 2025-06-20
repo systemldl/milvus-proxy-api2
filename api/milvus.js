@@ -1,20 +1,37 @@
 export default async function handler(req, res) {
   const token = process.env.MILVUS_TOKEN;
-  const body = req.body || { filtro_body: { pagina: 1, quantidade: 50 } };
+
+  if (!token) {
+    return res.status(500).json({ error: "Token não configurado na Vercel." });
+  }
+
+  const url = "https://apiintegracao.milvus.com.br/api/chamado/listagem";
+
+  const payload = {
+    filtro_body: {
+      pagina: 1,
+      quantidade: 50,
+      status: [],
+      tecnico_id: null,
+      categoria_id: null,
+      subcategoria_id: null
+    }
+  };
 
   try {
-    const response = await fetch('https://apiintegracao.milvus.com.br/api/chamado/listagem', {
-      method: 'POST',
+    const resposta = await fetch(url, {
+      method: "POST",
       headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const texto = await resposta.text();
+
+    res.status(resposta.status).send(texto);
+  } catch (erro) {
+    res.status(500).json({ erro: "Erro na requisição à API Milvus", detalhes: erro.message });
   }
 }
